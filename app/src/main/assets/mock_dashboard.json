@@ -1,0 +1,8 @@
+{
+  "balance": "$1,300.00",
+  "items": [
+    {"id":  "1", "title":  "Balance", "subtitle":  "test"},
+    {"id":  "2", "title":  "Pagos", "subtitle":  "2 pendientes"},
+    {"id":  "3", "title":  "Notificaciones", "subtitle":  "5 nuevas"}
+  ]
+}
