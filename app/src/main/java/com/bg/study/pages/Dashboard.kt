@@ -265,7 +265,7 @@ fun Dashboard(
         item { Text("Notificaciones") }
         item { Spacer(Modifier.height(12.dp)) }
         when {
-            uiState.items.isNullOrEmpty() -> {
+            uiState.items.isNotEmpty() -> {
                 items(uiState.items) { tx -> DashboardItemRow(tx) }
             }
         }
