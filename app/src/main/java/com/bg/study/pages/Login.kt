@@ -35,17 +35,18 @@ import com.bg.study.flow.presentation.login.LoginViewModel
 
 
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier,) {
+fun LoginScreen(modifier: Modifier = Modifier, onLoggedIn: () -> Unit = {}) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var accepted by remember { mutableStateOf(true) }
 
 
     val isPreview = LocalInspectionMode.current
-    val vm: LoginViewModel? = if(isPreview) null else viewModel(factory = LoginViewModel.factory())
+    val vm: LoginViewModel? = if (isPreview) null else viewModel(factory = LoginViewModel.factory())
     val uiState by (vm?.uiState?.collectAsState() ?: remember { mutableStateOf<LoginViewModel.UiState>(LoginViewModel.UiState.Idle) })
-
-
+    if(uiState is LoginViewModel.UiState.Succes) {
+        LaunchedEffect(uiState) { onLoggedIn()}
+    }
 
     Box(modifier.fillMaxSize()) {
         Column(
@@ -106,7 +107,7 @@ fun LoginScreen(modifier: Modifier = Modifier,) {
             Spacer(Modifier.height(20.dp))
 
             Button(
-                onClick = {},
+                onClick = { vm?.login(email, password) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)

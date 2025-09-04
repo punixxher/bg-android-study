@@ -2,6 +2,7 @@ package com.bg.study.flow.di
 
 import android.content.Context
 import com.bg.study.flow.application.usecases.FetchDashboardUseCase
+import com.bg.study.flow.application.usecases.GetCachedUserUseCase
 import com.bg.study.flow.application.usecases.LoginUseCase
 import com.bg.study.flow.infraestructure.datasource.AssetsDataSource
 import com.bg.study.flow.infraestructure.repository.AuthRepositoryImp
@@ -16,6 +17,7 @@ object ServiceLocator {
 
     val loginUseCase by lazy { LoginUseCase(authRepository) }
     val fetchDashboardUseCase by lazy { FetchDashboardUseCase(dashbaordRepository) }
+    val getCachedUserUseCase by lazy { GetCachedUserUseCase(authRepository) }
 
     fun init(appContext: Context) {
         if(!this::assetDataSourse.isInitialized){

@@ -2,6 +2,7 @@ package com.bg.study.pages
 
 import android.graphics.drawable.Icon
 import android.graphics.fonts.FontStyle
+import android.util.Log
 import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,15 +32,26 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bg.study.flow.domain.model.DashboardItem
+import com.bg.study.flow.presentation.dashboard.DashboardViewModel
+import com.bg.study.flow.presentation.login.LoginViewModel
+import java.nio.file.WatchEvent
 
 data class Transaction(
     val icon: ImageVector,
@@ -74,7 +86,7 @@ fun Header(name: String) {
 
 
 @Composable
-fun Balance() {
+fun Balance(UiState: DashboardViewModel.UiState) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -83,7 +95,7 @@ fun Balance() {
     ) {
         Text(text = "Balance de cuenta")
         Text(
-            text = "$5,971.00",
+            text = UiState.balance,
             fontSize = 48.sp,
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
         )
@@ -152,9 +164,48 @@ fun Transactions(t: Transaction) {
 }
 
 @Composable
+private fun DashboardItemRow(item: DashboardItem) {
+    Row(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(Color.White)
+            .fillMaxWidth()
+            .padding(horizontal = 14.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape).background(Color(0xFFE1E1E1)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(imageVector = Icons.Outlined.Dashboard, contentDescription = null, tint = Color.Gray)
+        }
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(text = item.title)
+            Text(text = item.subtitle)
+        }
+    }
+    Spacer(Modifier.height(15.dp))
+}
+
+
+@Composable
 fun Dashboard(
     modifier: Modifier = Modifier
 ) {
+    val isPreview = LocalInspectionMode.current
+    val vm: DashboardViewModel? =
+        if (isPreview) null else viewModel(factory = DashboardViewModel.factory())
+    val uiState by (vm?.uiState?.collectAsState()
+        ?: remember { mutableStateOf(DashboardViewModel.UiState()) })
+
+    LaunchedEffect(Unit) {
+        if (vm != null) vm.load()
+    }
+
+
     val today =
         listOf(
             Transaction(
@@ -207,13 +258,17 @@ fun Dashboard(
         item { Spacer(Modifier.height(30.dp)) }
         item { Header("Daniel Silva") }
         item { Spacer(Modifier.height(30.dp)) }
-        item { Balance() }
+        item { Balance(uiState) }
         item { Spacer(Modifier.height(12.dp)) }
         item { Statement() }
         item { Spacer(Modifier.height(12.dp)) }
-        item { Text("Hoy") }
+        item { Text("Notificaciones") }
         item { Spacer(Modifier.height(12.dp)) }
-        items(today) { tx -> Transactions(tx) }
+        when {
+            uiState.items.isNullOrEmpty() -> {
+                items(uiState.items) { tx -> DashboardItemRow(tx) }
+            }
+        }
         item { Text("Ayer") }
         item { Spacer(Modifier.height(12.dp)) }
         items(yesterday) { tx -> Transactions(tx) }

@@ -1,14 +1,22 @@
 package com.bg.study.flow.presentation.dashboard
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.bg.study.flow.application.usecases.FetchDashboardUseCase
 import com.bg.study.flow.application.usecases.GetCachedUserUseCase
+import com.bg.study.flow.di.ServiceLocator
 import com.bg.study.flow.domain.model.DashboardItem
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class DashboardViewModel(private val fetchDashboardUseCase: FetchDashboardUseCase, private val getCachedUserUseCase: GetCachedUserUseCase): ViewModel() {
+class DashboardViewModel(
+    private val fetchDashboardUseCase: FetchDashboardUseCase,
+    private val getCachedUserUseCase: GetCachedUserUseCase
+) : ViewModel() {
+
+
     data class UiState(
         val loading: Boolean = false,
         val balance: String = "",
@@ -17,10 +25,11 @@ class DashboardViewModel(private val fetchDashboardUseCase: FetchDashboardUseCas
     )
 
     private val _uiState = MutableStateFlow(UiState())
+    val uiState = _uiState.asStateFlow()
 
-    fun load(){
+    fun load() {
         val token = getCachedUserUseCase()?.token
-        if(token.isNullOrEmpty()){
+        if (token.isNullOrEmpty()) {
             _uiState.value = UiState(loading = false, error = "Usuario no se encuentra logeado")
             return
         }
@@ -31,8 +40,19 @@ class DashboardViewModel(private val fetchDashboardUseCase: FetchDashboardUseCas
                 onSuccess = {
                     UiState(loading = false, items = it.items, error = null, balance = it.balance)
                 },
-                onFailure = { UiState(loading = false, error = it.message ?: "Error")}
+                onFailure = { UiState(loading = false, error = it.message ?: "Error") }
             )
+        }
+    }
+
+    companion object {
+        fun factory(): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return DashboardViewModel(
+                    ServiceLocator.fetchDashboardUseCase,
+                    ServiceLocator.getCachedUserUseCase
+                ) as T
+            }
         }
     }
 }
